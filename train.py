@@ -17,6 +17,8 @@ import numpy as np
 from model.ResNet import *
 from model.SkyNet import *
 from model.VGG import *
+from optimizer.RAdam import *
+from optimizer.Ranger import *
 
 parser = argparse.ArgumentParser(description='SkyNet training')
 parser.add_argument('--model', type=str, default='SkyNet', metavar='model',
@@ -167,11 +169,19 @@ elif(args.optimizer == 'RMSprop'):
 elif(args.optimizer == 'Adagrad'):
     optimizer = torch.optim.Adagrad(model.parameters())
 elif(args.optimizer == 'Adadelta'):
-    optimizer = torch.optim.Adagrad(model.parameters())
+    optimizer = torch.optim.Adadelta(model.parameters())
 elif(args.optimizer == 'Adamax'):
     optimizer = torch.optim.Adamax(model.parameters())
+elif(args.optimizer == 'AdamW'):
+    optimizer = torch.optim.AdamW(model.parameters())
+elif(args.optimizer == 'RAdam'):
+    optimizer = RAdam(model.parameters())
+elif(args.optimizer == 'SparseAdam'):
+    optimizer = torch.optim.SparseAdam(model.parameters())
+elif(args.optimizer == 'Ranger'):
+    optimizer = Ranger(model.parameters())
 elif(args.optimizer == 'ASGD'):
-    optimizer = torch.optim.ASGD(model.parameters()) 
+    optimizer = torch.optim.ASGD(model.parameters())
 else:
     print('please specify a valid optimizer')
 
