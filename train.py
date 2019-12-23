@@ -130,7 +130,7 @@ elif(args.model == 'VGG16'):
 elif(args.model == 'VGG16dw'):
     model = vgg_dw(num_class = 102)
 elif(args.model == 'ResNet18'):
-    model = ResNet(BasicBlock,[2,2,2,2],102)
+    model = ResNet(BasicBlock, [2,2,2,2], num_classes = 102)
 else:
     print('please specify a valid model')
 
