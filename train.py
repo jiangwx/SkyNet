@@ -17,6 +17,7 @@ import numpy as np
 from model.ResNet import *
 from model.SkyNet import *
 from model.VGG import *
+from model.MobileNet import *
 from optimizer.RAdam import *
 from optimizer.Ranger import *
 
@@ -37,12 +38,10 @@ parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
-parser.add_argument('--optimizer', default='SGD', type=str, metavar='Optimizer',
+parser.add_argument('--optimizer', default='Adam', type=str, metavar='Optimizer',
                     help='optimizer: SGD, Adagrad, Adam, Adadelta, Adamax, ASGD, RMSprop')
-parser.add_argument('--log-interval', type=int, default=100, metavar='N',
-                    help='how many batches to wait before logging training status')
-parser.add_argument('--log', default='./logs/train/%s.log'%time.strftime('%Y-%m-%d_%H:%M:%S',time.localtime(time.time())), type=str, metavar='PATH',
-                    help='path to latest checkpoint (default: none)')
+parser.add_argument('--log', default='./logs/%s.log'%time.strftime('%Y-%m-%d_%H:%M:%S',time.localtime(time.time())), type=str, metavar='PATH',
+                    help='path to log (default: none)')
 args = parser.parse_args()
 
 def log(log_file,str):
@@ -131,15 +130,24 @@ elif(args.model == 'VGG16dw'):
     model = vgg_dw(num_class = 102)
 elif(args.model == 'ResNet18'):
     model = ResNet(BasicBlock, [2,2,2,2], num_classes = 102)
+elif(args.model == 'ResNet34'):
+    model = ResNet(BasicBlock, [3,4,6,3], num_classes = 102)
+elif(args.model == 'MobileNetV2'):
+    model = MobileNetV2(num_classes = 102)
 else:
     print('please specify a valid model')
 
+
 print(model)
 log(args.log,str(model))
+if args.start_epoch != 0:
+    model.load_state_dict(torch.load(args.resume))
+    
 
 num_gpu = len(args.device.split(','))
 os.environ["CUDA_VISIBLE_DEVICES"] = args.device
 if(len(args.device)>1):
+    model.to("cuda:{}".format(args.device.split(',')[0]))
     model = nn.DataParallel(model).cuda()
 else:
     model.cuda()
@@ -153,9 +161,6 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=int(num_gpu*a
 start_epoch = args.start_epoch
 total_epoch = args.epochs
 
-if args.start_epoch != 0:
-    model.load_state_dict(torch.load(args.resume))
-
 history_score=np.zeros((total_epoch + 1,4))
 
 loss_func = nn.CrossEntropyLoss()
@@ -163,7 +168,7 @@ loss_func = nn.CrossEntropyLoss()
 if(args.optimizer == 'SGD'):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.02, momentum=0.9)
 elif(args.optimizer == 'Adam'):
-    optimizer = torch.optim.Adam(model.parameters())
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 elif(args.optimizer == 'RMSprop'):
     optimizer = torch.optim.RMSprop(model.parameters())
 elif(args.optimizer == 'Adagrad'):
